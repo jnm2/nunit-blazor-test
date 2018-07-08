@@ -1,0 +1,41 @@
+﻿@inject TestRunnerService TestRunner
+
+<div class="console">@ConsoleSegmentsFragment</div>
+
+@functions
+{
+    private readonly List<LogSegment> segments = new List<LogSegment>();
+
+    protected override void OnInit()
+    {
+        TestRunner.SubscribeLog(OnSegmentsAdded);
+
+        ConsoleSegmentsFragment = builder =>
+        {
+            var endLine = false;
+
+            foreach (var segment in segments)
+            {
+                if (endLine) builder.AddContent(0, "\n");
+
+                if (!string.IsNullOrEmpty(segment.Text))
+                {
+                    builder.OpenElement(0, "span");
+                    builder.AddAttribute(0, "class", "console-style-" + segment.ColorStyle);
+                    builder.AddContent(0, segment.Text);
+                    builder.CloseElement();
+                }
+
+                endLine = segment.EndLine;
+            }
+        };
+    }
+
+    private void OnSegmentsAdded(IReadOnlyList<LogSegment> newSegments)
+    {
+        segments.AddRange(newSegments);
+        StateHasChanged();
+    }
+
+    private RenderFragment ConsoleSegmentsFragment { get; set; }
+}
